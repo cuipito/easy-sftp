@@ -8,7 +8,8 @@ PasswordAuthentication no
 PubkeyAuthentication yes
 Subsystem sftp internal-sftp
 ForceCommand internal-sftp
-ChrootDirectory %h
+ChrootDirectory /sftp/
+AuthorizedKeysFile /home/.ssh/authorized_keys
 HostKey /etc/ssh/host_keys/ssh_host_rsa_key
 HostKey /etc/ssh/host_keys/ssh_host_dsa_key
 HostKey /etc/ssh/host_keys/ssh_host_ecdsa_key
