@@ -1,4 +1,4 @@
-# sftp
+# easy-sftp
 
 A fast and secure [SFTP](https://en.wikipedia.org/wiki/SSH_File_Transfer_Protocol) server that runs in a container on [`Alpine Linux`](https://alpinelinux.org/), optimised for [`Kubernetes`](https://kubernetes.io/).
 Forked from amimof/sftp https://github.com/amimof/sftp to fit for my own needs.
