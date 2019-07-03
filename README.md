@@ -1,7 +1,7 @@
 # sftp
 
 A fast and secure [SFTP](https://en.wikipedia.org/wiki/SSH_File_Transfer_Protocol) server that runs in a container on [`Alpine Linux`](https://alpinelinux.org/), optimised for [`Kubernetes`](https://kubernetes.io/).
-Forked from amimof/sftp
+Forked from amimof/sftp https://github.com/amimof/sftp to fit to my own needs.
 
 ## Usage
 Configuration parameters are passed in to the container through environment variables. All variables are optional so that you can run a container with minimum configuration. The simples way of running using `Docker` is by using the following command.
@@ -17,6 +17,7 @@ Note that even though the username defaults to `sftpuser`, we still need to spec
 | `SSH_PASSWORD` | - | A password for the user. Setting this environment variable will allow `PasswordAuthentication`. |
 | `SSH_USERID` | `1337` | The Linux user id of the sftp user |
 | `SSH_GENERATE_HOSTKEYS` | `true` | Skips generation if host keys of set to false. Useful when providing your own set of host keys. |
+| `SSH_key` | `true` | You can place 1 key as a string in your. |
 | `LOG_LEVEL` | `INFO` | Use this environment variable to set the `LogLevel` directive in `sshd_config` |
 | `DEBUG` | `false` | Set to `true` to start `sshd` in debug mode. `sshd -d` |
 
@@ -37,6 +38,16 @@ $ docker run \
     -p 22:22 \
     -e SSH_USERNAME=sftpuser \
     -v ~/.ssh/id_rsa.pub:/home/.ssh/keys/id_rsa.pub \
+    cuipito/easy-sftp:latest
+```
+
+or use
+
+```
+$ docker run \
+    -p 22:22 \
+    -e SSH_USERNAME=sftpuser \
+    -e SSH_KEY="your-key" \
     cuipito/easy-sftp:latest
 ```
 
