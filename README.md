@@ -1,7 +1,7 @@
 # sftp
 
 A fast and secure [SFTP](https://en.wikipedia.org/wiki/SSH_File_Transfer_Protocol) server that runs in a container on [`Alpine Linux`](https://alpinelinux.org/), optimised for [`Kubernetes`](https://kubernetes.io/).
-Forked from amimof/sftp https://github.com/amimof/sftp to fit to my own needs.
+Forked from amimof/sftp https://github.com/amimof/sftp to fit for my own needs.
 
 ## Usage
 Configuration parameters are passed in to the container through environment variables. All variables are optional so that you can run a container with minimum configuration. The simples way of running using `Docker` is by using the following command.
