@@ -1,6 +1,6 @@
 FROM alpine:3.7
 
-LABEL maintainer="Amir Mofasser (@amimof)"
+LABEL maintainer="Theo Wilde (@cuipito)"
 
 COPY sshd_config /etc/ssh/sshd_config
 COPY server /
