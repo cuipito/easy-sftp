@@ -11,6 +11,6 @@ RUN set -x \
 &&  mkdir -p /var/run/sshd \
 && chmod +x /server
 
-#COPY hostkeys/ /etc/ssh/host_keys/.
+COPY hostkeys/ /etc/ssh/host_keys/.
 
 CMD ["/server"]
