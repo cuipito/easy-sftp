@@ -17,7 +17,11 @@ Note that even though the username defaults to `sftpuser`, we still need to spec
 | `SSH_PASSWORD` | - | A password for the user. Setting this environment variable will allow `PasswordAuthentication`. |
 | `SSH_USERID` | `1337` | The Linux user id of the sftp user |
 | `SSH_GENERATE_HOSTKEYS` | `true` | Skips generation if host keys of set to false. Useful when providing your own set of host keys. |
-| `SSH_key` | `true` | You can place 1 key as a string in your. |
+| `SSH_key` | `true` | You can place 1 key as a string in your environment variable. |
+| `SSH_USERNAME2` | `sftpuser2` | Username of the sftp user <if needed> |
+| `SSH_PASSWORD2` | - | A password for the user. Setting this environment variable will allow `PasswordAuthentication`. <if needed> |
+| `SSH_USERID2` | `1338` | The Linux user id of the sftp user <if needed> |
+| `SSH_key2` | `true` | You can place 1 key as a string in your environment variable. <if needed> |
 | `LOG_LEVEL` | `INFO` | Use this environment variable to set the `LogLevel` directive in `sshd_config` |
 | `DEBUG` | `false` | Set to `true` to start `sshd` in debug mode. `sshd -d` |
 
@@ -51,15 +55,24 @@ $ docker run \
     cuipito/easy-sftp:latest
 ```
 
-or if you want to use secrets
+Or if you want to use secrets
+The secret name must start with the username of the user where you would want to have the key.
+Example:
+
+username-key1
+username-rsa
+
+uername2-key1
+username-rsa
 
 ```
 $ docker run \
     -p 22:22 \
     -e SSH_USERNAME=sftpuser \
-    --secret your_secret_key \
+    --secret username-Key \
     cuipito/easy-sftp:latest
 ```
+
 
 ### Specify SSH host keys
 SSH host keys will be automatically generated and change between container restarts unless specified otherwise with the `SSH_GENERATE_HOSTKEYS` environment variable. To avoid `man-in-the-middle attack` warnings you can mount your own host keys into the container.
@@ -92,13 +105,10 @@ $ docker run \
 ```bash
 # rsa
 ssh-keygen -t rsa -b 4096 -f ~/mykeys/ssh_host_rsa_key
-
 # dsa
 ssh-keygen -t dsa -f ~/mykeys/ssh_host_dsa_key
-
 # ecdsa
 ssh-keygen -t ecdsa -f ~/mykeys/ssh_host_ecdsa_key
-
 # ed25519
 ssh-keygen -t ed25519 -f ~/mykeys/ssh_host_ed25519_key
 ```
