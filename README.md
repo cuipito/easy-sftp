@@ -105,13 +105,10 @@ $ docker run \
 ```bash
 # rsa
 ssh-keygen -t rsa -b 4096 -f ~/mykeys/ssh_host_rsa_key
-
 # dsa
 ssh-keygen -t dsa -f ~/mykeys/ssh_host_dsa_key
-
 # ecdsa
 ssh-keygen -t ecdsa -f ~/mykeys/ssh_host_ecdsa_key
-
 # ed25519
 ssh-keygen -t ed25519 -f ~/mykeys/ssh_host_ed25519_key
 ```

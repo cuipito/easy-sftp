@@ -53,6 +53,7 @@ else
 if [ -z "$SSH_USERID2" ]; then
   echo "INFO: UID/GUID not set for username2 setting default"
  SSH_USERID2=1338
+
 fi
 
 # Check if data directory is set
@@ -60,9 +61,27 @@ if [ -z "$SSH_DATADIR_NAME2" ]; then
   echo "INFO: Data dir not set. Using default"
   SSH_DATADIR_NAME2="data2"
 fi
-echo "INFO: Adding group ${SSH_USERNAME2} and sftponly"
+
+# Create user
+echo "INFO: Adding user ${SSH_USERNAME}"
+adduser -D -u $SSH_USERID -h /$SSH_USERNAME -G sftponly $SSH_USERNAME
+
+
+# Creating user2
+if [ "$SSH_USERID" == "$SSH_USERID2" ]; then
+        SSH_USERID2=1338
+
 addgroup -g $SSH_USERID2 $SSH_USERNAME2
 adduser -D -u $SSH_USERID2 -h /$SSH_USERNAME2 -G sftponly $SSH_USERNAME2
+
+echo "Changing userid for $SSH_USERNAME2 to $SSH_USERID2"
+sed -i 's/'$SSH_USERID2'/'$SSH_USERID'/g' /etc/passwd
+
+else
+addgroup -g $SSH_USERID2 $SSH_USERNAME
+adduser -D -u $SSH_USERID2 -h /$SSH_USERNAME2 -G sftponly $SSH_USERNAME2
+fi
+
 mkdir /sftp/$SSH_USERNAME2
 chown $SSH_USERNAME2:sftponly /sftp/$SSH_USERNAME2
 chmod 700 /sftp/$SSH_USERNAME2
@@ -77,12 +96,7 @@ fi
 
 
 fi
-
-
-# Create user
-echo "INFO: Adding user ${SSH_USERNAME}"
-adduser -D -u $SSH_USERID -h /$SSH_USERNAME -G sftponly $SSH_USERNAME
-
+#################################################################
 
 # Set password if provided
 if [ -z "$SSH_PASSWORD" ]; then
