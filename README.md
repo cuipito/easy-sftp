@@ -55,21 +55,23 @@ $ docker run \
     cuipito/easy-sftp:latest
 ```
 
-Or if you want to use secrets
+Or if you want to use secrets.
 The secret name must start with the username of the user where you would want to have the key.
 Example:
+User: foo
 
-username-key1
-username-rsa
+foo-worklaptop
+foo-homemac
 
-uername2-key1
-username-rsa
+User: bar
+bar-pc
+bar-laptop
 
 ```
 $ docker run \
     -p 22:22 \
     -e SSH_USERNAME=sftpuser \
-    --secret username-Key \
+    --secret foo-Key \
     cuipito/easy-sftp:latest
 ```
 
@@ -112,4 +114,3 @@ ssh-keygen -t ecdsa -f ~/mykeys/ssh_host_ecdsa_key
 # ed25519
 ssh-keygen -t ed25519 -f ~/mykeys/ssh_host_ed25519_key
 ```
-
