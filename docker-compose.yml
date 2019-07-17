@@ -1,4 +1,4 @@
-version: '3'
+version: '3.1'
 services:
   sftp:
    image: cuipito/easy-sftp:latest
@@ -6,8 +6,14 @@ services:
         - /dir/on/host/:/sftp/username
         - /etc/localtime:/etc/localtime:ro
    ports:
-     - "22:22"
+     - "222:22"
+   secrets:
+     - ssh-key-secret
    environment:
         SSH_USERNAME: "sftpuser"
         SSH_KEY: "ssh-rsa key"
 
+
+secrets:
+     ssh-key-secret:
+        external: true

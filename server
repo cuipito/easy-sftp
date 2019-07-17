@@ -61,9 +61,20 @@ mkdir /sftp/$SSH_USERNAME
 chown $SSH_USERNAME:sftponly /sftp/$SSH_USERNAME
 chmod 700 /sftp/$SSH_USERNAME
 
+#####################################
+if [ -z $(ls /run/secrets/) ]; then
+echo "No SSH secrets present"
+else
+	echo "placing Secret SSH Keys"
+mkdir -p /home/.ssh/keys
+        for SSH_SECRET in $(ls /run/secrets/); do
+   cat /run/secrets/$SSH_SECRET > /home/.ssh/keys/$SSH_SECRET.pub
+   done
+fi
+############################################################
 
 if [ -z "$SSH_KEY" ]; then
-echo "no keys"
+echo "No public keys as parameter"
 else
 echo "INFO: Placing key that is provided as variable"
   mkdir -p /home/.ssh/keys

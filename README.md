@@ -51,6 +51,16 @@ $ docker run \
     cuipito/easy-sftp:latest
 ```
 
+or if you want to use secrets
+
+```
+$ docker run \
+    -p 22:22 \
+    -e SSH_USERNAME=sftpuser \
+    --secret your_secret_key \
+    cuipito/easy-sftp:latest
+```
+
 ### Specify SSH host keys
 SSH host keys will be automatically generated and change between container restarts unless specified otherwise with the `SSH_GENERATE_HOSTKEYS` environment variable. To avoid `man-in-the-middle attack` warnings you can mount your own host keys into the container.
 ```
