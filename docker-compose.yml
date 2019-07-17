@@ -8,12 +8,12 @@ services:
    ports:
      - "222:22"
    secrets:
-     - ssh-key-secret
+     - sftpuser-key
    environment:
         SSH_USERNAME: "sftpuser"
         SSH_KEY: "ssh-rsa key"
 
 
 secrets:
-     ssh-key-secret:
+     sftpuser-key:
         external: true
