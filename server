@@ -1,37 +1,37 @@
 #!/bin/bash
 
-# Check if username is set
-if [ -z "$SSH_USERNAME" ]; then
-  echo "INFO: Username not set. Using default"
-  SSH_USERNAME="sftpuser"
+
+SSH_USERNAME_=($(export | grep -o SSH_USERNAME_.*))
+SSH_USERID_=($(export | grep -o SSH_USERID_.*))
+SSH_DATADIR_NAME_=($(export | grep -o SSH_DATADIR_NAME_.*))
+SSH_PASSWORD_=($(export | grep -o SSH_PASSWORD_.*))
+
+
+if [ ${#SSH_USERNAME_[@]} -eq 0 ]; then
+  echo "INFO: Username not set. Using default sftpuser"
+declare -a SSH_USERNAME_=('SSH_USERNAME_1="sftpuser"')
+  echo ${SSH_USERNAME_:16:-1}
+fi
+
+
+# Check if uid/guid is set
+if [ ${#SSH_USERID_[@]} -eq 0 ]; then
+echo "INFO: UID/GUID not set. Using default"
+declare -a SSH_USERID_=(1337)
+echo ${SSH_USERID_}
+fi
+
+# Check if datadir is set
+if [ ${#SSH_DATADIR_NAME_[@]} -eq 0 ]; then
+echo "INFO: Data dir not set. Using default"
+declare -a  SSH_DATADIR_NAME_=('data')
+echo ${SSH_DATADIR_NAME_}
 fi
 
 # Check if uid/guid is set
-if [ -z "$SSH_USERID" ]; then
-  echo "INFO: UID/GUID not set. Using default"
-  SSH_USERID=1337
-fi
-
-# Check if data directory is set
-if [ -z "$SSH_DATADIR_NAME" ]; then
-  echo "INFO: Data dir not set. Using default"
-  SSH_DATADIR_NAME="data"
-fi
-
-
-# Check if username is set
-if [ -z "$SSH_USERNAME2" ]; then
-  echo "INFO: Username2 not set"
-fi
-
-# Check if uid/guid is set
-if [ -z "$SSH_USERID2" ]; then
-  echo "INFO: UID/GUID not set for username2"
-fi
-
-# Check if data directory is set
-if [ -z "$SSH_DATADIR_NAME2" ]; then
-  echo "INFO: Data dir2 not set."
+if [ ${#SSH_PASSWORD_[@]} -eq 0 ]; then
+echo "INFO: No password has been set. disabling password login"
+SSH_NO_PASSWORD=1
 fi
 
 # Check if generate hostkeys is set
@@ -40,73 +40,53 @@ if [ -z "$SSH_GENERATE_HOSTKEYS" ]; then
   SSH_GENERATE_HOSTKEYS="true"
 fi
 
-
 # Create group
-echo "INFO: Adding group ${SSH_USERNAME} and sftponly"
-addgroup -g $SSH_USERID $SSH_USERNAME
-addgroup sftponly
+echo "INFO: Adding group sftponly"
+#addgroup -g $SSH_USERID $SSH_USERNAME
+#addgroup sftponly
 
-if [ -z "$SSH_USERNAME2" ]; then
-echo " Not creasting User2"
-else
-# Check if uid/guid is set
-if [ -z "$SSH_USERID2" ]; then
-  echo "INFO: UID/GUID not set for username2 setting default"
- SSH_USERID2=1338
-
-fi
-
-# Check if data directory is set
-if [ -z "$SSH_DATADIR_NAME2" ]; then
-  echo "INFO: Data dir not set. Using default"
-  SSH_DATADIR_NAME2="data2"
-fi
-
-# Create user
-echo "INFO: Adding user ${SSH_USERNAME}"
-adduser -D -u $SSH_USERID -h /$SSH_USERNAME -G sftponly $SSH_USERNAME
+# Creating chroot and taking ownership
+echo "INFO: Creating chroot and jail for the user"
+mkdir /sftp/
+chown root:root /sftp/
 
 
-# Creating user2
-if [ "$SSH_USERID" == "$SSH_USERID2" ]; then
-        SSH_USERID2=1338
-
-addgroup -g $SSH_USERID2 $SSH_USERNAME2
-adduser -D -u $SSH_USERID2 -h /$SSH_USERNAME2 -G sftponly $SSH_USERNAME2
-
-echo "Changing userid for $SSH_USERNAME2 to $SSH_USERID2"
-sed -i 's/'$SSH_USERID2'/'$SSH_USERID'/g' /etc/passwd
+#checking password enablement
+if [ "$SSH_NO_PASSWORD" == "1" ]; then
+  echo "disabling password login"
 
 else
-addgroup -g $SSH_USERID2 $SSH_USERNAME
-adduser -D -u $SSH_USERID2 -h /$SSH_USERNAME2 -G sftponly $SSH_USERNAME2
-fi
+  echo "enabling password login"
+   sed -i "s/PasswordAuthentication\s[^ ]*/PasswordAuthentication yes/g" /etc/ssh/sshd_config
+ fi
 
-mkdir /sftp/$SSH_USERNAME2
-chown $SSH_USERNAME2:sftponly /sftp/$SSH_USERNAME2
-chmod 700 /sftp/$SSH_USERNAME2
 
-if [ -z "$SSH_PASSWORD2" ]; then                                                                                                                                                                                                                echo "INFO: Password not provided for user ${SSH_USERNAME}"
-  passwd -u $SSH_USERNAME2
+# Create user loop
+for ((i=0;i<${#SSH_USERNAME_[@]};++i));
+
+do
+echo "INFO: Adding user ${SSH_USERNAME_:16:-1}"
+echo "adduser -D -u ${SSH_USERID_} -h /${SSH_USERNAME_:16:-1} -G sftponly ${SSH_USERNAME_:16:-1}"
+addgroup -g ${SSH_USERID_} ${SSH_USERNAME_:16:-1}
+mkdir /sftp/${$SSH_USERNAME_:16:-1}
+chown ${$SSH_USERNAME_:16:-1}:sftponly /sftp/${$SSH_USERNAME_:16:-1}
+chmod 700 /sftp/${$SSH_USERNAME_:16:-1}
+done
+
+#checking password enablement
+if [ "$SSH_NO_PASSWORD" == "0" ]; then
+  echo "Setting passwords for users"
+# Loop Set password if provided
+for ((i=0;i<${#SSH_PASSWORD_[@]};++i));
+do
+
+echo ${$SSH_USERNAME_:16:-1}:${$SSH_PASSWORD_:14:-1} | chpasswd > /dev/null
+done
 else
-  echo "INFO: Setting password for user ${SSH_USERNAME2}"
-  echo $SSH_USERNAME2:$SSH_PASSWORD2 | chpasswd > /dev/null
-  sed -i "s/PasswordAuthentication\s[^ ]*/PasswordAuthentication yes/g" /etc/ssh/sshd_config
-fi
-
+  echo "not setting passwords for users"
 
 fi
-#################################################################
 
-# Set password if provided
-if [ -z "$SSH_PASSWORD" ]; then
-  echo "INFO: Password not provided for user ${SSH_USERNAME}"
-  passwd -u $SSH_USERNAME
-else
-  echo "INFO: Setting password for user ${SSH_USERNAME}"
-  echo $SSH_USERNAME:$SSH_PASSWORD | chpasswd > /dev/null
-  sed -i "s/PasswordAuthentication\s[^ ]*/PasswordAuthentication yes/g" /etc/ssh/sshd_config
-fi
 
 # Set Port to listen on
 if [ ! -z "$SSH_PORT" ]; then
@@ -114,110 +94,64 @@ if [ ! -z "$SSH_PORT" ]; then
   sed -i "s/Port\s[^ ]*/Port ${SSH_PORT}/g" /etc/ssh/sshd_config
 fi
 
-# Creating chroot and taking ownership
-echo "INFO: Creating chroot and jail for the user"
-mkdir /sftp/
-chown root:root /sftp/
 
-#Creating home dir for users
-mkdir /sftp/$SSH_USERNAME
-chown $SSH_USERNAME:sftponly /sftp/$SSH_USERNAME
-chmod 700 /sftp/$SSH_USERNAME
-
+############################################################
+#Needs to be changed
 #####################################
+
+
 if [ -z $(ls /run/secrets/$SSH_USERNAME-*) ]; then
 echo "No SSH secrets present"
 else
-	echo "placing Secret SSH Keys"
-mkdir -p /home/$SSH_USERNAME/.ssh/keys
-SSH_keys_secret=$(cd /run/secrets/ && ls $SSH_USERNAME*)
-        for SSH_SECRET in $SSH_keys_secret; do
-   cat /run/secrets/$SSH_SECRET > /home/$SSH_USERNAME/.ssh/keys/$SSH_SECRET.pub
+        echo "placing Secret SSH Keys"
 
-#  cat /home/$SSH_USERNAME/.ssh/keys/$SSH_SECRET.pub >> /home/$SSH_USERNAME/.ssh/authorized_keys
-  echo_key=$(cat /home/$SSH_USERNAME/.ssh/keys/$SSH_SECRET.pub)
-  echo $echo_key >> /home/$SSH_USERNAME/.ssh/authorized_keys
+
+for ((i=0;i<${#SSH_USERNAME_[@]};++i));
+
+do
+
+mkdir -p /home/${$SSH_USERNAME_:16:-1}/.ssh/keys
+   SSH_keys_secret=$(cd /run/secrets/ && ls ${$SSH_USERNAME_:16:-1}*)
+   for SSH_SECRET in $SSH_keys_secret; do
+   cat /run/secrets/$SSH_SECRET > /home/${$SSH_USERNAME_:16:-1}/.ssh/keys/$SSH_SECRET.pub
+   
+  echo_key=$(cat /home/${$SSH_USERNAME_:16:-1}/.ssh/keys/$SSH_SECRET.pub)
+  echo $echo_key >> /home/${$SSH_USERNAME_:16:-1}/.ssh/authorized_keys
    done
-chown $SSH_USERNAME:root /home/$SSH_USERNAME/.ssh/authorized_keys 
-chmod 644  /home/$SSH_USERNAME/.ssh/authorized_keys 
+chown ${$SSH_USERNAME_:16:-1}:root /home/${$SSH_USERNAME_:16:-1}/.ssh/authorized_keys
+chmod 644  /home/${$SSH_USERNAME_:16:-1}/.ssh/authorized_keys
 fi
 
-if [ -z $(ls /run/secrets/$SSH_USERNAME2-*) ]; then
-echo "No SSH secrets present for user " $SSH_USERNAME2
-else
-        echo "placing Secret2 SSH Keys for user " $SSH_USERNAME2
-mkdir -p /home/$SSH_USERNAME2/.ssh/keys
-SSH_keys_secret2=$(cd /run/secrets/ && ls $SSH_USERNAME2*)
-        for SSH_SECRET2 in $SSH_keys_secret2; do
-   cat /run/secrets/$SSH_SECRET2 > /home/$SSH_USERNAME2/.ssh/keys/$SSH_SECRET2.pub
-
-#   cat /home/$SSH_USERNAME2/.ssh/keys/$SSH_SECRET2.pub >> /home/$SSH_USERNAME2/.ssh/authorized_keys
-  echo_key=$(cat /home/$SSH_USERNAME2/.ssh/keys/$SSH_SECRET2.pub)
-  echo $echo_key >> /home/$SSH_USERNAME2/.ssh/authorized_keys
-   done   
-chown $SSH_USERNAME2:root /home/$SSH_USERNAME2/.ssh/authorized_keys 
- chmod 644  /home/$SSH_USERNAME2/.ssh/authorized_keys
-fi  
-############################################################
 
 if [ -z "$SSH_KEY" ]; then
-echo "No public keys as parameter for $SSH_USERNAME"
+echo "No public keys as parameter for ${$SSH_USERNAME_:16:-1}"
 else
-echo "INFO: Placing key that is provided as variable for user $SSH_USERNAME"
+echo "INFO: Placing key that is provided as variable for user ${$SSH_USERNAME_:16:-1}"
 
 
-if [ -d /home/$SSH_USERNAME/.ssh/authorized_keys ]; then
+if [ -d /home/${$SSH_USERNAME_:16:-1}/.ssh/authorized_keys ]; then
 
-  mkdir -p /home/$SSH_USERNAME/.ssh/keys
- echo $SSH_KEY > /home/$SSH_USERNAME/.ssh/keys/$SSH_USERNAME-var.pub
+  mkdir -p /home/${$SSH_USERNAME_:16:-1}/.ssh/keys
+ echo $SSH_KEY > /home/${$SSH_USERNAME_:16:-1}/.ssh/keys/${$SSH_USERNAME_:16:-1}-var.pub
 echo "INFO: Set ownership and permission of .ssh directory"
-  chown -R root:root /home/$SSH_USERNAME/.ssh 
-  chmod 755 /home/$SSH_USERNAME/.ssh      
-  echo_key=$(cat /home/$SSH_USERNAME/.ssh/keys/$SSH_SECRET.pub)
-  echo $echo_key >> /home/$SSH_USERNAME/.ssh/authorized_keys    
-  chown $SSH_USERNAME:root /home/$SSH_USERNAME/.ssh/authorized_keys
-  chmod 644 /home/$SSH_USERNAME/.ssh/authorized_keys   
+  chown -R root:root /home/${$SSH_USERNAME_:16:-1}/.ssh
+  chmod 755 /home/${$SSH_USERNAME_:16:-1}/.ssh
+  echo_key=$(cat /home/${$SSH_USERNAME_:16:-1}/.ssh/keys/$SSH_SECRET.pub)
+  echo $echo_key >> /home/${$SSH_USERNAME_:16:-1}/.ssh/authorized_keys
+  chown ${$SSH_USERNAME_:16:-1}:root /home/${$SSH_USERNAME_:16:-1}/.ssh/authorized_keys
+  chmod 644 /home/${$SSH_USERNAME_:16:-1}/.ssh/authorized_keys
 
 
 else
-echo "also placing the environment key for user $SSH_USERNAME"
-echo $SSH_KEY >> /home/$SSH_USERNAME/.ssh/keys/$SSH_USERNAME-var.pub
-echo_key=$(cat /home/$SSH_USERNAME/.ssh/keys/$SSH_USERNAME-var.pub)
-echo $echo_key >> /home/$SSH_USERNAME/.ssh/authorized_keys  
-chown $SSH_USERNAME:root /home/$SSH_USERNAME/.ssh/authorized_keys
-chmod 644 /home/$SSH_USERNAME/.ssh/authorized_keys
-
-fi
-
-fi
-
-if [ -z "$SSH_KEY2" ]; then
-echo "No public keys as parameter for $SSH_USERNAME2"
-else
-echo "INFO: Placing key that is provided as variable"
-
-if [ -d /home/$SSH_USERNAME2/.ssh/authorized_keys ]; then 
-
-  mkdir -p /home/$SSH_USERNAME2/.ssh/keys
- echo $SSH_KEY2 > /home/$SSH_USERNAME2/.ssh/keys/$SSH_USERNAME2-var.pub
-echo "INFO: Set ownership and permission of .ssh directory"
-  chown -R root:root /home/$SSH_USERNAME2/.ssh
-  chmod 755 /home/$SSH_USERNAME2/.ssh
-  echo_key=$(cat /home/$SSH_USERNAME2/.ssh/keys/$SSH_USERNAME2-var.pub)
-  echo $echo_key >> /home/$SSH_USERNAME2/.ssh/authorized_keys
-  chown $SSH_USERNAME2:root /home/$SSH_USERNAME2/.ssh/authorized_keys
-  chmod 644 /home/$SSH_USERNAME2/.ssh/authorized_keys
-
-else
-echo "also placing the enviroment key for the user $SSH_USERNAME2"
-echo $SSH_KEY >> /home/$SSH_USERNAME2/.ssh/keys/$SSH_USERNAME2-var.pub
-echo_key=$(cat /home/$SSH_USERNAME2/.ssh/keys/$SSH_USERNAME2-var.pub)
-echo $echo_key >> /home/$SSH_USERNAME2/.ssh/authorized_keys  
-chown $SSH_USERNAME2:root /home/$SSH_USERNAME2/.ssh/authorized_keys
-chmod 644 /home/$SSH_USERNAME2/.ssh/authorized_keys
-
+echo "also placing the environment key for user ${$SSH_USERNAME_:16:-1}"
+echo $SSH_KEY >> /home/${$SSH_USERNAME_:16:-1}/.ssh/keys/${$SSH_USERNAME_:16:-1}-var.pub
+echo_key=$(cat /home/${$SSH_USERNAME_:16:-1}/.ssh/keys/${$SSH_USERNAME_:16:-1}-var.pub)
+echo $echo_key >> /home/${$SSH_USERNAME_:16:-1}/.ssh/authorized_keys
+chown ${$SSH_USERNAME_:16:-1}:root /home/$SSH_USERNAME/.ssh/authorized_keys
+chmod 644 /home/${$SSH_USERNAME_:16:-1}/.ssh/authorized_keys
 fi
 fi
+
 
 # Generate host keys by default
 if [ "${SSH_GENERATE_HOSTKEYS,,}" == "true" ]; then
