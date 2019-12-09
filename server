@@ -9,37 +9,37 @@ SSH_KEY_=($(export | grep -o SSH_KEY_.*))
 
 if [ ${#SSH_USERNAME_[@]} -eq 0 ]; then
   echo "INFO: Username not set. Using default sftpuser"
-declare -a SSH_USERNAME_=('SSH_USERNAME_1="sftpuser"')
+  declare -a SSH_USERNAME_=('SSH_USERNAME_1="sftpuser"')
   echo ${SSH_USERNAME_:16:-1}
 fi
 
 
 # Check if uid/guid is set
 if [ ${#SSH_USERID_[@]} -eq 0 ]; then
-echo "INFO: UID/GUID not set. Using default"
-declare -a SSH_USERID_=(1337)
-echo ${SSH_USERID_}
+  echo "INFO: UID/GUID not set. Using default"
+  declare -a SSH_USERID_=(1337)
+  echo ${SSH_USERID_}
 fi
 
 # Check if datadir is set
 if [ ${#SSH_DATADIR_NAME_[@]} -eq 0 ]; then
-echo "INFO: Data dir not set. Using default"
-declare -a  SSH_DATADIR_NAME_=('data')
-echo ${SSH_DATADIR_NAME_}
+  echo "INFO: Data dir not set. Using default"
+  declare -a  SSH_DATADIR_NAME_=('data')
+  echo ${SSH_DATADIR_NAME_}
 fi
 
 # Check if password is set
 if [ ${#SSH_PASSWORD_[@]} -eq 0 ]; then
-echo "INFO: No password has been set. disabling password login"
-SSH_NO_PASSWORD=1
+  echo "INFO: No password has been set. disabling password login"
+  SSH_NO_PASSWORD=1
 fi
 
 # Check if environment key is set
 if [ ${#SSH_KEY_[@]} -eq 0 ]; then
-echo "INFO: No environment key provided"
-SSH_ENV_KEY=1
-else
-SSH_ENV_KEY=0
+  echo "INFO: No environment key provided"
+  SSH_ENV_KEY=1
+  else
+  SSH_ENV_KEY=0
 fi
 
 # Check if generate hostkeys is set
@@ -62,45 +62,45 @@ chown root:root /sftp/
 #checking password enablement
 if [ "$SSH_NO_PASSWORD" == "1" ]; then
   echo "disabling password login"
-for ((i=0;i<${#SSH_USERNAME_[@]};++i));
+    for ((i=0;i<${#SSH_USERNAME_[@]};++i));
 
-do
-echo "INFO: Adding user ${SSH_USERNAME_:16:-1}"
-adduser -D -u ${SSH_USERID_} -h /${SSH_USERNAME_:16:-1} -G sftponly ${SSH_USERNAME_:16:-1}
-addgroup -g ${SSH_USERID_} ${SSH_USERNAME_:16:-1}
-mkdir /sftp/"${SSH_USERNAME_:16:-1}"
-chown ${SSH_USERNAME_:16:-1}:sftponly /sftp/${SSH_USERNAME_:16:-1}
-chmod 700 /sftp/${SSH_USERNAME_:16:-1}
-passwd -u ${SSH_USERNAME_:16:-1}
-done
-else
+    do
+    echo "INFO: Adding user ${SSH_USERNAME_:16:-1}"
+    adduser -D -u ${SSH_USERID_} -h /${SSH_USERNAME_:16:-1} -G sftponly ${SSH_USERNAME_:16:-1}
+    addgroup -g ${SSH_USERID_} ${SSH_USERNAME_:16:-1}
+    mkdir /sftp/"${SSH_USERNAME_:16:-1}"
+    chown ${SSH_USERNAME_:16:-1}:sftponly /sftp/${SSH_USERNAME_:16:-1}
+    chmod 700 /sftp/${SSH_USERNAME_:16:-1}
+    passwd -u ${SSH_USERNAME_:16:-1}
+    done
+  else
   echo "enabling password login"
    sed -i "s/PasswordAuthentication\s[^ ]*/PasswordAuthentication yes/g" /etc/ssh/sshd_config
- fi
+fi
 
 
 # Create user loop
 for ((i=0;i<${#SSH_USERNAME_[@]};++i));
 
-do
-echo "INFO: Adding user ${SSH_USERNAME_:16:-1}"
-adduser -D -u ${SSH_USERID_} -h /${SSH_USERNAME_:16:-1} -G sftponly ${SSH_USERNAME_:16:-1}
-addgroup -g ${SSH_USERID_} ${SSH_USERNAME_:16:-1}
-mkdir /sftp/"${SSH_USERNAME_:16:-1}"
-chown ${SSH_USERNAME_:16:-1}:sftponly /sftp/${SSH_USERNAME_:16:-1}
-chmod 700 /sftp/${SSH_USERNAME_:16:-1}
+  do
+  echo "INFO: Adding user ${SSH_USERNAME_:16:-1}"
+  adduser -D -u ${SSH_USERID_} -h /${SSH_USERNAME_:16:-1} -G sftponly ${SSH_USERNAME_:16:-1}
+  addgroup -g ${SSH_USERID_} ${SSH_USERNAME_:16:-1}
+  mkdir /sftp/"${SSH_USERNAME_:16:-1}"
+  chown ${SSH_USERNAME_:16:-1}:sftponly /sftp/${SSH_USERNAME_:16:-1}
+  chmod 700 /sftp/${SSH_USERNAME_:16:-1}
 done
 
 #checking password enablement
 if [ "$SSH_NO_PASSWORD" == "1" ]; then
   echo "Setting passwords for users"
-# Loop Set password if provided
-for ((i=0;i<${#SSH_PASSWORD_[@]};++i));
-do
+  # Loop Set password if provided
+    for ((i=0;i<${#SSH_PASSWORD_[@]};++i));
+    do
 
-echo ${SSH_USERNAME_:16:-1}:${SSH_PASSWORD_:14:-1} | chpasswd > /dev/null
-done
-else
+    echo ${SSH_USERNAME_:16:-1}:${SSH_PASSWORD_:14:-1} | chpasswd > /dev/null
+    done
+  else
   echo "not setting passwords for users"
 
 fi
@@ -119,26 +119,26 @@ fi
 
 
 if [ -z $(ls /run/secrets/${SSH_USERNAME_:16:-1}-*) ]; then
-echo "No SSH secrets present"
-else
+  echo "No SSH secrets present"
+  else
         echo "placing Secret SSH Keys"
 
 
-for ((i=0;i<${#SSH_USERNAME_[@]};++i));
+  for ((i=0;i<${#SSH_USERNAME_[@]};++i));
 
-do
+    do
 
-mkdir -p /home/${SSH_USERNAME_:16:-1}/.ssh/keys
-   SSH_keys_secret=$(cd /run/secrets/ && ls ${SSH_USERNAME_:16:-1}*)
-   for SSH_SECRET in $SSH_keys_secret; do
-   cat /run/secrets/$SSH_SECRET > /home/${SSH_USERNAME_:16:-1}/.ssh/keys/$SSH_SECRET.pub
+    mkdir -p /home/${SSH_USERNAME_:16:-1}/.ssh/keys
+    SSH_keys_secret=$(cd /run/secrets/ && ls ${SSH_USERNAME_:16:-1}*)
+      for SSH_SECRET in $SSH_keys_secret; do
+        cat /run/secrets/$SSH_SECRET > /home/${SSH_USERNAME_:16:-1}/.ssh/keys/$SSH_SECRET.pub
 
-  echo_key=$(cat /home/${SSH_USERNAME_:16:-1}/.ssh/keys/$SSH_SECRET.pub)
-  echo $echo_key >> /home/${SSH_USERNAME_:16:-1}/.ssh/authorized_keys
-   done
-chown ${SSH_USERNAME_:16:-1}:root /home/${SSH_USERNAME_:16:-1}/.ssh/authorized_keys
-chmod 644  /home/${SSH_USERNAME_:16:-1}/.ssh/authorized_keys
-done
+        echo_key=$(cat /home/${SSH_USERNAME_:16:-1}/.ssh/keys/$SSH_SECRET.pub)
+        echo $echo_key >> /home/${SSH_USERNAME_:16:-1}/.ssh/authorized_keys
+      done
+    chown ${SSH_USERNAME_:16:-1}:root /home/${SSH_USERNAME_:16:-1}/.ssh/authorized_keys
+    chmod 644  /home/${SSH_USERNAME_:16:-1}/.ssh/authorized_keys
+  done
 fi
 
 
@@ -239,7 +239,7 @@ fi
 # Run sshd in debug mode
 if [ -z "$DEBUG" ]; then
         exec /usr/sbin/sshd -D -e
-else
+  else
         echo "WARN: Debug mode enabled!"
         exec /usr/sbin/sshd -D -e -d
 fi
